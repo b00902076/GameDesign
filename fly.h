@@ -1639,7 +1639,7 @@ public:
 	ACTIONid zako_idleID, zako_runID, zako_attackID, zako_dieID;
 	ACTIONid npc_idleID, npc_runID, npc_attackID, npc_skillID, npc_deadID;
 	float sPos[3], sFDir[3], sUDir[3];
-	float attack_range, territory_range, butsukari_range;
+	float attack_range, territory_range, butsukari_range, butsukari_range_NPC;
 	int butsukari_flag;
 	int power = 15;
 	void loadActions(int ch) {

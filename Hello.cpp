@@ -67,6 +67,7 @@ float total_attack_time_span[100] = { 0 };
 void bossAI(int skip);
 void bearAI(int skip);
 void manAI(int skip);
+void donzoAI(int skip);
 
 void check_die(FnCharacter& actor, int skip);
 void check_stop(FnCharacter& actor, int skip);
@@ -123,7 +124,7 @@ void RenderIt(int);
 // basic
 float rotatespeed = 5.5f;
 float cameraZoom = 480.0f;
-float cameraHeight = 40.0f;
+float cameraHeight = 60.0f;
 float cameraAngle = 0.0f;
 float headHeight = 60.0f;
 int attackspan = 0;
@@ -197,9 +198,11 @@ void FyMain(int argc, char **argv) {
 	FySetTexturePath("Data\\NTU6\\Characters");
 	FySetCharacterPath("Data\\NTU6\\Characters");
 	CHARACTERid LvbuID = scene.LoadCharacter("Lyubu2");
-	float pos[3] = { 3569.0f, -3908.0f, 60.0f };
-	//float pos[3] = { 712.0f, 3083.0f, 60.0f }; //start point
-	float fDir[3] = { 1.0f, 1.0f, 0.0f };
+	//float pos[3] = { 3569.0f, -3908.0f, 60.0f }; //start point
+	//float pos[3] = { 712.0f, 3083.0f, 60.0f }; //goal point
+	float pos[3] = {3569.0f, -2808.0f, 60.0f};
+	//float fDir[3] = { 1.0f, 1.0f, 0.0f };
+	float fDir[3] = { -1.0f, 0.0f, 0.0f };
 	float uDir[3] = { 0.0f, 0.0f, 1.0f };
 	Lvbu.ID(LvbuID);
 	Lvbu.SetDirection(fDir, uDir);
@@ -220,16 +223,19 @@ void FyMain(int argc, char **argv) {
 	memcpy(Lvbu.sUDir, uDir, sizeof(uDir));
 	totalcharacterpool.push_back(&Lvbu);
 
+	float posDZ[3] = { 3569.0f, -3908.0f, 60.0f };
+
 	for (int i = 0; i < DONZOMAX; i++) {
 		CHARACTERid DonzoID = scene.LoadCharacter("Donzo2");
 		// put the character on terrain
-		pos[1] += 100.0f;
+		posDZ[1] += 100.0f;
 		Donzo[i].ID(DonzoID);
 		Donzo[i].SetDirection(fDir, uDir);
 		Donzo[i].SetTerrainRoom(terrainRoomID, 10.0f);
-		beOK = Donzo[i].PutOnTerrain(pos);
+		beOK = Donzo[i].PutOnTerrain(posDZ);
 		Donzo[i].loadActions(1);
-		Donzo[i].butsukari_range = 300;
+		Donzo[i].butsukari_range = 30;
+		Donzo[i].butsukari_range_NPC = 300;
 		Donzo[i].butsukari_flag = 1;
 
 		// set the character to idle action
@@ -342,7 +348,7 @@ void FyMain(int argc, char **argv) {
 		targetFX[i + DONZOMAX + ZAKOMAX].init("Blow_01e", "_enemy_hit_fire2.wav", &bear[i]);
 
 		targetpool.push_back(&bear[i]);
-		butsukaripool.push_back(&bear[i]);
+		//butsukaripool.push_back(&bear[i]);
 	}
 
 	FySetModelPath("Data\\NTU6\\NPCs");
@@ -380,7 +386,7 @@ void FyMain(int argc, char **argv) {
 		targetFX[i + DONZOMAX + ZAKOMAX + BEARMAX].init("Blow_01e", "_enemy_hit_fire2.wav", &man[i]);
 
 		targetpool.push_back(&man[i]);
-		butsukaripool.push_back(&man[i]);
+		//butsukaripool.push_back(&man[i]);
 	}
 
 	FySetModelPath("Data\\NTU6\\NPCs");
@@ -406,7 +412,7 @@ void FyMain(int argc, char **argv) {
 	boss.SetDirection(boss.sFDir, boss.sUDir);
 	totalcharacterpool.push_back(&boss);
 	targetpool.push_back(&boss);
-	butsukaripool.push_back(&boss);
+	//butsukaripool.push_back(&boss);
 
 	FySetModelPath("Data\\NTU6\\NPCs_More");
 	FySetTexturePath("Data\\NTU6\\NPCs_More");
@@ -730,7 +736,7 @@ void ItrTimer(int skip) {
 void GameAI(int skip) {
 	if (game_end_flag) {
 		if (rotate_time == 60){
-			if (Lvbu.power < 0) {
+			if (Lvbu.power <= 0) {
 				Lvbu.SetCurrentAction(NULL, 0, Lvbu.deadID, 4);
 				Lvbu.Play(START, 0.0f, FALSE, TRUE);
 			}
@@ -752,7 +758,7 @@ void GameAI(int skip) {
 			game_Restart();
 			init_UI(&Lvbu);
 			initKEY();
-			Lvbu.power = 15;
+			Lvbu.power = 99;
 		}
 
 		return;
@@ -890,6 +896,7 @@ void GameAI(int skip) {
 	bossAI(skip);
 	bearAI(skip);
 	manAI(skip);
+	//donzoAI(skip);
 
 	return;
 }
@@ -909,7 +916,7 @@ void checkendgame() {
 		endFlag = TRUE;
 		rotate_time = 90;
 	}
-	else if (Lvbu.power < 0) {
+	else if (Lvbu.power <= 0) {
 		game_end_flag = 1;
 		rotate_time = 90;
 		failFlag = TRUE;
@@ -947,6 +954,17 @@ void game_Restart() {
 	}
 	start = clock();
 	Lvbu.SetCurrentAction(NULL, 0, Lvbu.idleID);
+}
+
+void donzoAI(int skip) {
+	int range;
+
+	for (int i = 0; i < DONZOMAX; i++) {
+		range = check_range(Donzo[i]);
+		if (range == 1)		collision_back(Donzo[i]);
+
+	}
+
 }
 
 void manAI(int skip){
@@ -1291,9 +1309,9 @@ void ZakoMoveTest(FnCharacter* me) {
 	me->GetPosition(pos1);
 	for (auto& x : butsukaripool) {
 		x->GetPosition(pos2);
-		if (x->butsukari_flag == 0 || pos2[2] < 0 || x->healthpoint <= 0.0f) { continue; }
+		if (x->butsukari_flag == 0 || pos2[2] < 0 || x->healthpoint <= 0.0f || x->butsukari_range_NPC <=0.0f) { continue; }
 
-		if ((pos1[0] - pos2[0])*(pos1[0] - pos2[0]) + (pos1[1] - pos2[1])*(pos1[1] - pos2[1]) < (x->butsukari_range + me->butsukari_range)*(x->butsukari_range + me->butsukari_range)) {
+		if ((pos1[0] - pos2[0])*(pos1[0] - pos2[0]) + (pos1[1] - pos2[1])*(pos1[1] - pos2[1]) < (x->butsukari_range_NPC + me->butsukari_range)*(x->butsukari_range_NPC + me->butsukari_range)) {
 			me->GetDirection(fdir1, tmp);
 			//x->GetDirection(fdir2, tmp);
 			fdir2[0] = pos2[0] - pos1[0]; fdir2[1] = pos2[1] - pos1[1];
@@ -1332,10 +1350,10 @@ void ZakoAI(int skip) {
 	RemoveZako();
 
 	int range;
-	for (int i = 0; i < BOSSMONSTERMAX; i++){
+	for (int i = 0; i < ZAKOMAX; i++){
 		range = check_range(zako[i]);
 		if (range == 1) {
-			collision_back(zako[i]);
+			//collision_back(zako[i]);
 			break;
 		}
 	}
@@ -1526,7 +1544,7 @@ void RenderIt(int skip) {
 	vp.Render3D(cID, TRUE, TRUE);
 	if (game_end_flag == 0)	vp2.Render3D(cID2, TRUE, TRUE);
 	vp.RenderSprites(sID2, FALSE, TRUE);
-/*
+	/*
 	// show frame rate
 	static char string[128];
 	if (frame == 0) {
